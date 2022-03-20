@@ -1,12 +1,35 @@
-import { GetServerSideProps } from 'next'
+import { GetStaticPaths, GetStaticProps } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Ability, PokemonDetails, PokemonType, Stat } from 'utils/types'
+import {
+  Ability,
+  PokemonData,
+  PokemonDetails,
+  PokemonType,
+  Stat
+} from 'utils/types'
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const { params } = ctx
+export const getStaticPaths: GetStaticPaths = async () => {
+  const pokeApiUrl = `https://pokeapi.co/api/v2/pokemon?limit=1126`
 
+  const data = await fetch(pokeApiUrl).then((res) => res.json())
+
+  const paths = data.results.map((pokemon: PokemonData) => {
+    return {
+      params: {
+        id: pokemon.url.split('/')[6]
+      }
+    }
+  })
+
+  return {
+    paths,
+    fallback: false
+  }
+}
+
+export const getStaticProps: GetStaticProps = async ({ params }) => {
   const data = await fetch(
     `https://pokeapi.co/api/v2/pokemon/${params?.id}`
   ).then((res) => res.json())

@@ -6,30 +6,27 @@ import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { Pokemon, PokemonData } from 'utils/types'
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const { query, params } = ctx
-  console.log('🚀 ~ query', query)
-  console.log('🚀 ~ params', params)
-
-  const offset = Number(query.page) * 20
+export const getServerSideProps: GetServerSideProps = async ({ query }) => {
+  const offset = Number(query?.page) * 20
 
   const pokeApiUrl = `https://pokeapi.co/api/v2/pokemon?offset=${offset}`
 
   const data = await fetch(pokeApiUrl).then((res) => res.json())
-  const { next, previous } = data
 
   const allPokemons = data.results.map((pokemonItem: PokemonData) => {
     const id = pokemonItem.url.split('/')[6]
 
     const pokemon = {
+      id,
       name: pokemonItem.name,
       url: pokemonItem.url,
-      id,
       image: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
     }
 
     return pokemon
   })
+
+  const { next, previous } = data
 
   return {
     props: { next, previous, allPokemons }
@@ -42,7 +39,7 @@ interface HomeProps {
   previous: string
 }
 
-const Home = ({ next, previous, allPokemons }: HomeProps) => {
+const Home = ({ allPokemons }: HomeProps) => {
   const [pokemons, setPokemons] = useState<Pokemon[]>([])
   const [page, setPage] = useState(0)
 
