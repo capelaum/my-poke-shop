@@ -4,14 +4,13 @@ import type { GetServerSideProps } from 'next'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
+import { api } from 'services/api'
 import { Pokemon, PokemonData } from 'utils/types'
 
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
   const offset = Number(query?.page) * 20
 
-  const pokeApiUrl = `https://pokeapi.co/api/v2/pokemon?offset=${offset}`
-
-  const data = await fetch(pokeApiUrl).then((res) => res.json())
+  const { data } = await api.get(`pokemon?offset=${offset}`)
 
   const allPokemons = data.results.map((pokemonItem: PokemonData) => {
     const id = pokemonItem.url.split('/')[6]

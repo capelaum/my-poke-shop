@@ -2,6 +2,7 @@ import { GetStaticPaths, GetStaticProps } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
 import Link from 'next/link'
+import { api } from 'services/api'
 import {
   Ability,
   PokemonData,
@@ -11,9 +12,7 @@ import {
 } from 'utils/types'
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const pokeApiUrl = `https://pokeapi.co/api/v2/pokemon?limit=1126`
-
-  const data = await fetch(pokeApiUrl).then((res) => res.json())
+  const { data } = await api.get('pokemon?limit=1126')
 
   const paths = data.results.map((pokemon: PokemonData) => {
     return {
@@ -46,7 +45,8 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   }
 
   return {
-    props: { pokemon }
+    props: { pokemon },
+    revalidate: 24 * 60 * 60 // 1 day
   }
 }
 
