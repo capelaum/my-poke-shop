@@ -79,6 +79,7 @@ const Home = ({ allPokemons }: HomeProps) => {
             bg-gradient-to-bl from-red-500 to-yellow-500
           `}
         >
+          {/* <Pagination /> */}
           <div className="flex mb-10">
             <button
               disabled={page === -1}
