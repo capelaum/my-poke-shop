@@ -7,7 +7,7 @@ import { Pokemon, PokemonData } from 'utils/types'
 
 const Home: NextPage = () => {
   const [pokemons, setPokemons] = useState<Pokemon[]>([])
-  const [limit, setLimit] = useState(20)
+  const [limit] = useState(20)
   const [offset, setOffset] = useState(0)
 
   const fetchPokemons = useCallback(async () => {
