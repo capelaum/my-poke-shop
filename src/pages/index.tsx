@@ -1,48 +1,69 @@
 import { Header } from 'components/Header'
 import { PokemonCard } from 'components/PokemonCard'
-import type { NextPage } from 'next'
+import type { GetServerSideProps } from 'next'
 import Head from 'next/head'
-import { useCallback, useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
+import { useEffect, useState } from 'react'
 import { Pokemon, PokemonData } from 'utils/types'
 
-const Home: NextPage = () => {
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const { query, params } = ctx
+  console.log('🚀 ~ query', query)
+  console.log('🚀 ~ params', params)
+
+  const offset = Number(query.page) * 20
+
+  const pokeApiUrl = `https://pokeapi.co/api/v2/pokemon?offset=${offset}`
+
+  const data = await fetch(pokeApiUrl).then((res) => res.json())
+  const { next, previous } = data
+
+  const allPokemons = data.results.map((pokemonItem: PokemonData) => {
+    const id = pokemonItem.url.split('/')[6]
+
+    const pokemon = {
+      name: pokemonItem.name,
+      url: pokemonItem.url,
+      id,
+      image: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
+    }
+
+    return pokemon
+  })
+
+  return {
+    props: { next, previous, allPokemons }
+  }
+}
+
+interface HomeProps {
+  allPokemons: Pokemon[]
+  next: string
+  previous: string
+}
+
+const Home = ({ next, previous, allPokemons }: HomeProps) => {
   const [pokemons, setPokemons] = useState<Pokemon[]>([])
-  const [limit] = useState(20)
-  const [offset, setOffset] = useState(0)
+  const [page, setPage] = useState(0)
 
-  const fetchPokemons = useCallback(async () => {
-    const res = await fetch(
-      `https://pokeapi.co/api/v2/pokemon?$limit=${limit}&offset=${offset}`
-    )
-
-    const data = await res.json()
-
-    const allPokemons = data.results.map((pokemonItem: PokemonData) => {
-      const id = pokemonItem.url.split('/')[6]
-
-      const pokemon = {
-        name: pokemonItem.name,
-        url: pokemonItem.url,
-        id,
-        image: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
-      }
-
-      return pokemon
-    })
-
-    setPokemons(allPokemons)
-  }, [limit, offset])
+  const router = useRouter()
 
   useEffect(() => {
-    fetchPokemons()
-  }, [fetchPokemons])
+    setPokemons(allPokemons)
+  }, [allPokemons])
 
   function handleNextPage() {
-    setOffset(offset + 20)
+    if (page < 56) {
+      setPage(page + 1)
+      router.push(`?page=${page + 1}`)
+    }
   }
 
   function handlePreviousPage() {
-    setOffset(offset - 20)
+    if (page > 0) {
+      setPage(page - 1)
+      router.push(`?page=${page - 1}`)
+    }
   }
 
   return (
@@ -63,7 +84,7 @@ const Home: NextPage = () => {
         >
           <div className="flex mb-10">
             <button
-              disabled={offset === 0}
+              disabled={page === -1}
               onClick={handlePreviousPage}
               className="mr-4 px-4 py-2 bg-stone-50 rounded-md hover:bg-stone-200 font-semibold"
             >

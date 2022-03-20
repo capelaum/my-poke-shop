@@ -1,42 +1,37 @@
+import { GetServerSideProps } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
-import { useCallback, useEffect, useState } from 'react'
 import { Ability, PokemonDetails, PokemonType, Stat } from 'utils/types'
 
-export default function Details() {
-  const {
-    query: { id }
-  } = useRouter()
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const { params } = ctx
 
-  const [pokemon, setPokemon] = useState<PokemonDetails>()
+  const data = await fetch(
+    `https://pokeapi.co/api/v2/pokemon/${params?.id}`
+  ).then((res) => res.json())
 
-  const fetchPokemon = useCallback(async () => {
-    const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`)
-    const data = await res.json()
+  const pokemon = {
+    name: data.name,
+    id: data.id,
+    image: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${params?.id}.png`,
+    types: data.types.map((t: PokemonType) => t.type.name),
+    stats: data.stats.map((s: Stat) => {
+      return { name: s.stat.name, value: s.base_stat }
+    }),
+    abilities: data.abilities.map((a: Ability) => a.ability.name)
+  }
 
-    const pokemon = {
-      name: data.name,
-      url: data.url,
-      id: data.id,
-      image: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`,
-      types: data.types.map((t: PokemonType) => t.type.name),
-      stats: data.stats.map((s: Stat) => {
-        return { name: s.stat.name, value: s.base_stat }
-      }),
-      abilities: data.abilities.map((a: Ability) => a.ability.name)
-    }
+  return {
+    props: { pokemon }
+  }
+}
 
-    setPokemon(pokemon)
-  }, [id])
+interface PokemonDetailsProps {
+  pokemon: PokemonDetails
+}
 
-  useEffect(() => {
-    if (id) {
-      fetchPokemon()
-    }
-  }, [fetchPokemon, id])
-
+export default function Details({ pokemon }: PokemonDetailsProps) {
   function setCardBackground(pokemonType?: string) {
     switch (pokemonType) {
       case 'fire':
